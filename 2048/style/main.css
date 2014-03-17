@@ -7,8 +7,9 @@ html, body {
   font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
   font-size: 18px; }
 
-body {
-  margin: 80px 0; }
+body { /* twitch plays 2048 */
+  width: 1290px;
+  margin: 80px auto; }
 
 .heading:after {
   content: "";
@@ -118,6 +119,7 @@ hr {
 
 .container {
   width: 500px;
+  float: left; /* twitch plays 2048 */
   margin: 0 auto; }
 
 @-webkit-keyframes fade-in {
@@ -639,3 +641,62 @@ hr {
     margin-top: 90px !important; }
   .game-message .lower {
     margin-top: 30px !important; } }
+
+
+/* twitch plays 2048 */
+#twitch-status {
+  border-radius: 6px;
+  box-shadow: 0 0 8px inset;
+  float: left;
+  height: 638px;
+  margin-left: 20px;
+  margin-top: 6px;
+  padding: 20px;
+  width: 460px;
+}
+#twitch-action {
+  font-size: 2em;
+  left: 0;
+  opacity: 1;
+  position: absolute;
+  right: 0;
+  text-align: center;
+  top: 0;
+}
+#twitch-action.new {
+  margin-top: -30px;
+  opacity: 0;
+  transition: opacity 1s linear 0s, margin-top 1s linear 0s;
+}
+#twitch-time {
+  background: none repeat scroll 0 0 #BBADA0;
+  font-size: 2em;
+  height: 10px;
+  margin-top: 2.5em;
+}
+#twitch-time-bar {
+  background: none repeat scroll 0 0 #776E65;
+  height: 10px;
+  width: 100%;
+}
+#twitch-time-bar.reset {
+  transition: width 25s linear 0s;
+  width: 0;
+}
+#twitch-votes table {
+  border-collapse: collapse;
+}
+#twitch-restart td {
+  border-top: 1px dashed;
+}
+.relative {
+  position: relative;
+}
+#twitch-chat {
+  border: none;
+  border-radius: 6px;
+  float: left;
+  height: 685px;
+  margin-left: 20px;
+  width: 250px;
+}
