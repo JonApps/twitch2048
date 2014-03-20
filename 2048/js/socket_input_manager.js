@@ -82,13 +82,19 @@ SocketInputManager.prototype.checkVotes = function () {
 SocketInputManager.prototype.listen = function () {
   var self = this;
   self.html.time.classList.add("reset");
-  ws = new WebSocket("ws://localhost:2048");
-  ws.onmessage = function(event) {
+  self.ws = new WebSocket("ws://localhost:2048");
+  self.ws.onmessage = function(event) {
     var direction = event.data;
     if (direction >= 0 && direction <= 4) {
       self.votes[direction]++;
       self.redrawVotes();
     }
+  }
+  self.ws.onclose = function(event) {
+    console.warn('WebSocket lost connection! Trying to reconnect..');
+  }
+  self.ws.onerror = function(event) {
+    console.warn('WebSocket error!');
   }
 };
 

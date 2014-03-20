@@ -1,68 +1,77 @@
 var net        = require('net');
-var config     = require('./config.js')
-/*
-  // config.js
-  config = {
-    host: 'irc.twitch.tv',
-    port: 6667,
-    user: 'yourTwitchUserName',
-    pass: 'see www.twitchapps.com/tmi/',
-    chan: '#YourChannelName'
-  }
-  module.exports = config;
-*/
 var parse_irc  = require('irc-message');
-var websock    = require('ws').Server
+var events     = require("events");
 
-var ws         = new websock({port: 2048});
 
-console.log("waiting for browser to connect...")
-ws.on('connection', function(ws) {
-  console.log('Browser connected!');
+function IRC(host, port, user, pass, chan) {
+  this.host    = host;
+  this.port    = port;
+  this.user    = user;
+  this.pass    = pass;
+  this.chan    = chan;
+  this.tcpsock = null;
+}
 
-  var tcpsock = net.connect(config.port, config.host);
-  tcpsock.on('connect', function() {
-    tcpsock.write('USER ' + config.user + '\n');
-    tcpsock.write('PASS ' + config.pass + '\n');
-    tcpsock.write('NICK ' + config.user + '\n');
-    tcpsock.write('JOIN ' + config.chan + '\n');
+IRC.prototype = new events.EventEmitter;
 
-    console.log('IRC connection established!')
-  });
+IRC.prototype.connect = function() {
+  var self     = this;
+  try {
+    self.tcpsock = net.connect(self.port, self.host);
+  } catch(err) {
+    console.error("Error! failed to connect:", e);
+  }
 
-  tcpsock.on('data', function(data) {
+  if (self.tcpsock) {
+    self.tcpsock.on('connect', function() {
+      self.send('USER ' + self.user);
+      if (self.pass) self.send('PASS ' + self.pass, false);
+      self.send('NICK ' + self.user);
+
+      self.emit('connected');
+    });
+
+    self.tcpsock.on('data', function(data) {
+      self.emit('message', parse_irc(data.toString()));
+    });
+
+    self.tcpsock.on('close', function() {
+      self.emit('disconnected');
+    });
+
+    self.tcpsock.on('error', function(err) {
+      console.error("Error!", err);
+    })
+  }
+}
+
+IRC.prototype.join = function(channel) {
+  if (channel) {
+    this.chan = channel;
+  }
+  this.send('JOIN ' + this.chan);
+  this.emit('joined');
+}
+
+IRC.prototype.send = function(text, log) {
+  if (this.tcpsock) {
     try {
-      var msg = parse_irc(data.toString());
-      if (msg && msg['command'] == 'PRIVMSG' && msg['params'].length == 2 && msg['params'][0].toLowerCase() == config.chan.toLowerCase()) {
-        switch(msg['params'][1].toLowerCase()) {
-          case 'up\r\n':
-            console.log('up');
-            ws.send("0");
-            break;
-          case 'down\r\n':
-            console.log('down');
-            ws.send("2");
-            break;
-          case 'left\r\n':
-            console.log('left');
-            ws.send("3");
-            break;
-          case 'right\r\n':
-            console.log('right');
-            ws.send("1");
-            break;
-          case 'restart\r\n':
-            console.log('restart');
-            ws.send("4");
-            break;
-        }
+      this.tcpsock.write(text + '\r\n');
+      if (log != false) {
+        console.log('>', text);
       }
     } catch(err) {
-      console.log(err);
+      console.error("Error sending data:", err);
     }
-  });
+  }
+}
 
-  tcpsock.on('close', function() {
-    console.log('IRC disconnected!');
-  });
-});
+IRC.prototype.chat = function(msg) {
+  this.send('PRIVMSG ' + this.chan + ' :' + msg);
+}
+
+IRC.prototype.quit = function(reason) {
+  this.send('QUIT ' + (reason || ''));
+}
+
+module.exports = IRC;
